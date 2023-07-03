@@ -60,10 +60,6 @@ class TuningFork:
         self._za = self.get_zeta_for_Q(barQ)
         self._Ga = self.get_G(self._wa, self._za)
 
-        print(f"{self._la=}")
-        print(f"{self._ma=}")
-        print(f"{self._za=}")
-
         # Tine
         if tine_type == "long":
             self._lb = 0.15
@@ -86,9 +82,6 @@ class TuningFork:
         # TineはTonebarの影響を受けるからフィードバックで接続する
         self._Gf = ctrl.feedback(self._Ga, self._Gb)
 
-        print(f"{self._lb=}")
-        print(f"{self._mb=}")
-        print(f"{self._zb=}")
     
     def impulse(self, t: np.ndarray):
         """任意の長さでインパルス応答を生成する
@@ -100,11 +93,21 @@ class TuningFork:
 
         return y, T
 
+class RhodesPiano:
+    def _get_pitch(self, concert_pitch, i):
+        return concert_pitch * np.power(2., (i-69)/12)
+
+    def __init__(self, concert_pitch: 440.) -> None:
+        self._f0s = [self._get_pitch(concert_pitch, i) for i in range(88)]
+        self._forks = [TuningFork(self._f0s[i], self._f0s[i]/2., "medium", 1.40, 1.47) for i in range(88)]
+
+    def impulse(self, midi_note_num: int, t: np.ndarray):
+        return self._forks[midi_note_num].impulse(t)
+
 if __name__ == "__main__":
     
-    fork = TuningFork(440, 220, "medium", 1.40, 1.47)
-
-    y, t = fork.impulse(np.arange(0, 4, 0.01))
+    rhodes = RhodesPiano(440.)
+    y, t = rhodes.impulse(12, np.arange(0, 4, 0.01))
     
     plt.figure()
     plt.plot(t, y)
