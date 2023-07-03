@@ -20,6 +20,8 @@ Ga ... Tone Bar
 Gb ... Tine  
 """
 class TuningFork:
+    """ToneBarとTineからなる構造体
+    """
     def get_G(self, wn, zeta):
         return ctrl.tf((wn*wn), (1, 2.*zeta*wn, wn*wn))
 
@@ -94,6 +96,8 @@ class TuningFork:
         return y, T
 
 class RhodesPiano:
+    """複数のTuning Forkからなる楽器
+    """
     def _get_pitch(self, concert_pitch, i):
         return concert_pitch * np.power(2., (i-69)/12)
 
