@@ -118,18 +118,44 @@ class RhodesPiano:
     
     def bode(self, midi_note_num: int):
         return ctrl.bode(self._forks[midi_note_num].get_Gf(), Hz=True, dB=True)
+    
+    def bar_lengthes(self):
+        return [x._la for i,x in enumerate(self._forks)]
+    
+    def tine_lengthes(self):
+        return [x._lb for i,x in enumerate(self._forks)]
 
 import wave, array
 if __name__ == "__main__":
     
     rhodes = RhodesPiano(440.)
 
-    y, t = rhodes.impulse(64, np.arange(0, 5, 1./16000), )
+    y, t = rhodes.impulse(64, np.arange(0, 10, 1./16000), )
 
     plt.figure()
+    ax = plt.subplot(2,1,1)
+    bx = plt.subplot(2,1,2)
+
+    la = rhodes.bar_lengthes()
+    ax.plot(la)
+    ax.set_title("Tone Bar Length")
+    ax.set_ylabel("Length (m) $\\rightarrow$")
+    ax.set_xlabel("Midi Note Number $\\rightarrow$")
+    ax.grid()
+
+    lb = rhodes.tine_lengthes()
+    bx.plot(lb)
+    bx.set_title("Tine Length")
+    bx.set_ylabel("Length (m) $\\rightarrow$")
+    bx.set_xlabel("Midi Note Number $\\rightarrow$")
+    bx.grid()
+
+    plt.tight_layout()
+
     #plt.plot(t, y)
-    for i in range(32,64):
-        rhodes.bode(i)
+    #for i in range(32,64):
+    #    rhodes.bode(i)
+    
     plt.show()
     
     y = y / np.max(np.abs(y))
