@@ -61,6 +61,12 @@ $$
 
 ![ToneBarとTineの長さ](./docs/Figure_1.png)
 
+## Tineの長さの決定方法
+
+Tineの長さは片持ち梁で表せることがわかったが、重量と長さが未知の変数である。
+重量と長さを決定するには、$L$と$m$の連立方程式を立てて解く必要がある。
+理想的には、C2音のときのToneBarの長さは $140 \text{mm}$, Tineの長さは $125 \text{mm}$ である
+
 # 関連する特許
 
 ## Tone generator with vibratory bars
