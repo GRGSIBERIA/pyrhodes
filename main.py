@@ -58,7 +58,7 @@ class TuningFork:
         self._fa = fbar
         self._la = self.get_bar_length(fbar)
         self._wa = 2. * np.pi * self._fa
-        self._ma = self._la * 8.88e-3 * 0.00254 * 0.0254
+        self._ma = self._la * 8.88e-3 * 0.003 * 0.012
         self._za = self.get_zeta_for_Q(barQ)
         self._Ga = self.get_G(self._wa, self._za)
 
@@ -74,8 +74,8 @@ class TuningFork:
 
         self._fb = f0
         self._wb = 2. * np.pi * self._fb
-        self._mb = 0.001524**2. * np.pi * self._lb * 7.84e-3
-        yungs = 205e6
+        self._mb = (0.001524 * 0.5)**2. * np.pi * self._lb * 7.84e-3
+        yungs = 205e3
         moments = 2e-16    # 円の断面二次モーメント、メートルに変換
         self._lb = self.get_tine_length(f0, self._mb, yungs, moments)
         self._zb = self.get_zeta_for_Q(tineQ)
@@ -84,6 +84,11 @@ class TuningFork:
         # TineはTonebarの影響を受けるからフィードバックで接続する
         self._Gf = ctrl.feedback(self._Ga, self._Gb)
 
+    def __str__(self):
+        return f"{self._la=}\n{self._lb=}"
+
+    def get_Gf(self):
+        return self._Gf
     
     def impulse(self, t: np.ndarray):
         """任意の長さでインパルス応答を生成する
@@ -102,20 +107,45 @@ class RhodesPiano:
         return concert_pitch * np.power(2., (i-69)/12)
 
     def __init__(self, concert_pitch: 440.) -> None:
-        self._f0s = [self._get_pitch(concert_pitch, i) for i in range(88)]
-        self._forks = [TuningFork(self._f0s[i], self._f0s[i]/2., "medium", 1.40, 1.47) for i in range(88)]
+        N = 128
+        self._f0s = [self._get_pitch(concert_pitch, i) for i in range(N)]
+        self._forks = [TuningFork(self._f0s[i], self._f0s[i]/2., "medium", 1.40, 1.47) for i in range(N)]
+
+        print(self._forks[36])
 
     def impulse(self, midi_note_num: int, t: np.ndarray):
         return self._forks[midi_note_num].impulse(t)
+    
+    def bode(self, midi_note_num: int):
+        return ctrl.bode(self._forks[midi_note_num].get_Gf(), Hz=True, dB=True)
 
+import wave, array
 if __name__ == "__main__":
     
     rhodes = RhodesPiano(440.)
-    y, t = rhodes.impulse(12, np.arange(0, 4, 0.01))
-    
+
+    y, t = rhodes.impulse(64, np.arange(0, 5, 1./16000), )
+
     plt.figure()
-    plt.plot(t, y)
+    #plt.plot(t, y)
+    for i in range(32,64):
+        rhodes.bode(i)
     plt.show()
+    
+    y = y / np.max(np.abs(y))
+    y = y * 32767.
+    y = np.asarray(y, dtype=np.int16)
+
+    w = wave.Wave_write("test.wav")
+    w.setparams((
+        1,                        # channel
+        2,                        # byte width
+        16000,                    # sampling rate
+        len(y),                   # number of frames
+        "NONE", "not compressed"  # no compression
+    ))
+    w.writeframes(y)
+    w.close()
 
 """
 Tone generator with vibratory bars
