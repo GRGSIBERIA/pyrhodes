@@ -56,7 +56,11 @@ $$
 \left(\frac{3EI\xi}{m}\right)^{\frac{1}{3}} = \sqrt[3]{\frac{3EI\xi}{m}} = L
 $$
 
-よって、$f$, $m$, $E$, $I$がわかれば、$L$を示すことができる。
+よって、$f$, $m$, $E$, $I$がわかれば、Tineの長さ$L$を示すことができる。
+
+下図にTineとTone Barの長さを示す。
+
+![ToneBarとTineの長さ](./docs/Figure_1.png)
 
 # 関連する特許
 
