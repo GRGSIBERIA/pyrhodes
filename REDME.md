@@ -57,9 +57,6 @@ $$
 
 よって、$f$, $m$, $E$, $I$がわかれば、Tineの長さ$L$を示すことができる。
 
-下図にTineとTone Barの長さを示す。
-
-![ToneBarとTineの長さ](./docs/Figure_1.png)
 
 ## Tineの長さの決定方法
 

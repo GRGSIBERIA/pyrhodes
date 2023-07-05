@@ -44,13 +44,12 @@ class TuningFork:
 
     # ニッケル合金の密度: 8.88 g/cm
 
-    def __init__(self, f0: float, fbar: float, tine_type: str, barQ: float, tineQ: float, note_num: int):
+    def __init__(self, f0: float, fbar: float, barQ: float, tineQ: float, note_num: int):
         """Tuning Forkの初期化
 
         Args:
             f0 (float): Tineの固有振動数
             fbar (float): Tone Barの固有振動数
-            tine_type (str): Tineの種類, "long", "medium", "short"から選べる
             barQ (float): Tone BarのQ値
             tineQ (float): TineのQ値
         """
@@ -102,7 +101,7 @@ class RhodesPiano:
     def __init__(self, concert_pitch: 440.) -> None:
         N = 128
         self._f0s = [self._get_pitch(concert_pitch, i) for i in range(N)]
-        self._forks = [TuningFork(self._f0s[i], self._f0s[i]/2., "medium", 1.40, 1.47, i) for i in range(N)]
+        self._forks = [TuningFork(self._f0s[i], self._f0s[i]/1.485, 1.09, 1.07, i) for i in range(N)]
 
         print(self._forks[36])
 
@@ -123,48 +122,23 @@ if __name__ == "__main__":
     
     rhodes = RhodesPiano(440.)
 
-    y, t = rhodes.impulse(64, np.arange(0, 10, 1./16000), )
+    for i in range(128):
+        y, t = rhodes.impulse(i, np.arange(0, 10, 1./16000), )
+        
+        y = y / np.max(np.abs(y))
+        y = y * 32767.
+        y = np.asarray(y, dtype=np.int16)
 
-    plt.figure()
-    ax = plt.subplot(2,1,1)
-    bx = plt.subplot(2,1,2)
-
-    la = rhodes.bar_lengthes()
-    ax.plot(la)
-    ax.set_title("Tone Bar Length")
-    ax.set_ylabel("Length (m) $\\rightarrow$")
-    ax.set_xlabel("Midi Note Number $\\rightarrow$")
-    ax.grid()
-
-    lb = rhodes.tine_lengthes()
-    bx.plot(lb)
-    bx.set_title("Tine Length")
-    bx.set_ylabel("Length (m) $\\rightarrow$")
-    bx.set_xlabel("Midi Note Number $\\rightarrow$")
-    bx.grid()
-
-    plt.tight_layout()
-
-    #plt.plot(t, y)
-    #for i in range(32,64):
-    #    rhodes.bode(i)
-    
-    plt.show()
-    
-    y = y / np.max(np.abs(y))
-    y = y * 32767.
-    y = np.asarray(y, dtype=np.int16)
-
-    w = wave.Wave_write("test.wav")
-    w.setparams((
-        1,                        # channel
-        2,                        # byte width
-        16000,                    # sampling rate
-        len(y),                   # number of frames
-        "NONE", "not compressed"  # no compression
-    ))
-    w.writeframes(y)
-    w.close()
+        w = wave.Wave_write(f"wavs/{i}.wav")
+        w.setparams((
+            1,                        # channel
+            2,                        # byte width
+            16000,                    # sampling rate
+            len(y),                   # number of frames
+            "NONE", "not compressed"  # no compression
+        ))
+        w.writeframes(y)
+        w.close()
 
 """
 Tone generator with vibratory bars
