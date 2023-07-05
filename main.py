@@ -25,20 +25,6 @@ class TuningFork:
     def get_G(self, wn, zeta):
         return ctrl.tf((wn*wn), (1, 2.*zeta*wn, wn*wn))
 
-    def get_critical_damping(self, m, w0):
-        return 2. * m * w0
-
-    def get_zeta(self, c, cc):
-        return c / cc
-
-    # meters
-    def get_bar_length(self, f0):
-        return np.sqrt(0.5596/f0)
-    
-    def get_tine_length(self, f0, m, E, I):
-        xi = 1./(2. * np.pi * f0)
-        return np.power((3. * E * I * xi) / m, 1./3.)
-
     def get_zeta_for_Q(self, Q):
         return 1. / (2. * Q)
 
@@ -55,21 +41,12 @@ class TuningFork:
         """
         # Tone Bar
         self._fa = fbar
-        self._la = self.get_bar_length(fbar)
         self._wa = 2. * np.pi * self._fa
-        self._ma = self._la * 8.88e-3 * 0.003 * 0.012
         self._za = self.get_zeta_for_Q(barQ)
         self._Ga = self.get_G(self._wa, self._za)
 
-        # Tine -2.5833x + 216.67
-        self._lb = -2.5833 * note_num + 216.67
-
         self._fb = f0
         self._wb = 2. * np.pi * self._fb
-        self._mb = (0.001524 * 0.5)**2. * np.pi * self._lb * 7.84e-3
-        yungs = 205e3
-        moments = 2e-16    # 円の断面二次モーメント、メートルに変換
-        #self._lb = self.get_tine_length(f0, self._mb, yungs, moments)
         self._zb = self.get_zeta_for_Q(tineQ)
         self._Gb = self.get_G(self._wb, self._zb)
 
