@@ -44,7 +44,7 @@ class TuningFork:
 
     # ニッケル合金の密度: 8.88 g/cm
 
-    def __init__(self, f0: float, fbar: float, tine_type: str, barQ: float, tineQ: float):
+    def __init__(self, f0: float, fbar: float, tine_type: str, barQ: float, tineQ: float, note_num: int):
         """Tuning Forkの初期化
 
         Args:
@@ -62,22 +62,15 @@ class TuningFork:
         self._za = self.get_zeta_for_Q(barQ)
         self._Ga = self.get_G(self._wa, self._za)
 
-        # Tine
-        if tine_type == "long":
-            self._lb = 0.15
-        elif tine_type == "medium":
-            self._lb = 0.1
-        elif tine_type == "short":
-            self._lb = 0.05
-        else:
-            self._lb = self.get_bar_length(f0)
+        # Tine -2.5833x + 216.67
+        self._lb = -2.5833 * note_num + 216.67
 
         self._fb = f0
         self._wb = 2. * np.pi * self._fb
         self._mb = (0.001524 * 0.5)**2. * np.pi * self._lb * 7.84e-3
         yungs = 205e3
         moments = 2e-16    # 円の断面二次モーメント、メートルに変換
-        self._lb = self.get_tine_length(f0, self._mb, yungs, moments)
+        #self._lb = self.get_tine_length(f0, self._mb, yungs, moments)
         self._zb = self.get_zeta_for_Q(tineQ)
         self._Gb = self.get_G(self._wb, self._zb)
 
@@ -109,7 +102,7 @@ class RhodesPiano:
     def __init__(self, concert_pitch: 440.) -> None:
         N = 128
         self._f0s = [self._get_pitch(concert_pitch, i) for i in range(N)]
-        self._forks = [TuningFork(self._f0s[i], self._f0s[i]/2., "medium", 1.40, 1.47) for i in range(N)]
+        self._forks = [TuningFork(self._f0s[i], self._f0s[i]/2., "medium", 1.40, 1.47, i) for i in range(N)]
 
         print(self._forks[36])
 
