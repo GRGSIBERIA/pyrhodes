@@ -53,8 +53,13 @@ class TuningFork:
         # TineはTonebarの影響を受けるからフィードバックで接続する
         self._Gf = ctrl.feedback(self._Ga, self._Gb)
 
-    def __str__(self):
-        return f"{self._la=}\n{self._lb=}"
+        # 正規化した波形を保存する
+        self._waveform, _ = self.impulse(np.arange(0, 10, 1./16000))
+        maximum = np.max(np.abs(self._waveform))
+        self._waveform *= maximum
+
+    def get_waveform(self):
+        return np.copy(self._waveform)
 
     def get_Gf(self):
         return self._Gf
@@ -69,18 +74,53 @@ class TuningFork:
 
         return y, T
 
+class Magnet:
+    def magnetic_slope(self, Z: np.ndarray):
+        Y = [
+            -2.37E-08,
+            8.37E-07,
+            -1.12E-05,
+            6.78E-05,
+            -1.61E-04
+        ]
+        # SIGN(Z1)*($Y$1*ABS(Z1)^5+$Y$2*Z1^4+$Y$3*ABS(Z1)^3+$Y$4*Z1^2+$Y$5*ABS(Z1))
+        y = np.sign(Z) * (Y[0] * np.abs(Z)**5 + Y[1] * Z**4 + Y[2] * np.abs(Z)**3 + Y[3] * Z**2 + Y[4] * np.abs(Z))
+        return Z, y
+
+    def magnetic_slope_float(self, Z: float):
+        Y = [
+            -2.37E-08,
+            8.37E-07,
+            -1.12E-05,
+            6.78E-05,
+            -1.61E-04
+        ]
+        # SIGN(Z1)*($Y$1*ABS(Z1)^5+$Y$2*Z1^4+$Y$3*ABS(Z1)^3+$Y$4*Z1^2+$Y$5*ABS(Z1))
+        y = np.sign(Z) * (Y[0] * np.abs(Z)**5 + Y[1] * Z**4 + Y[2] * np.abs(Z)**3 + Y[3] * Z**2 + Y[4] * np.abs(Z))
+        return Z, y
+
+    def compute_waveform(self, fork: TuningFork, magnitude=1.0):
+        wave = fork.get_waveform() * magnitude
+        _, y = self.magnetic_slope(wave + self._offset)
+        return y
+
+    def __init__(self, offset=0.0):
+        self._offset = offset
+
 class RhodesPiano:
     """複数のTuning Forkからなる楽器
     """
     def _get_pitch(self, concert_pitch, i):
         return concert_pitch * np.power(2., (i-69)/12)
 
-    def __init__(self, concert_pitch: 440.) -> None:
+    def __init__(self, concert_pitch = 440., offset=4.) -> None:
         N = 128
         self._f0s = [self._get_pitch(concert_pitch, i) for i in range(N)]
         self._forks = [TuningFork(self._f0s[i], self._f0s[i]/1.485, 1.09, 1.07, i) for i in range(N)]
+        self._magnet = Magnet(offset)
 
-        print(self._forks[36])
+    def electromotive_force(self, note_num: int, magnitude=1.0):
+        return self._magnet.compute_waveform(self._forks[i], magnitude)
 
     def impulse(self, midi_note_num: int, t: np.ndarray):
         return self._forks[midi_note_num].impulse(t)
@@ -97,16 +137,25 @@ class RhodesPiano:
 import wave, array
 if __name__ == "__main__":
     
-    rhodes = RhodesPiano(440.)
+    rhodes = RhodesPiano(440., 0.5)
+
+    #for i in range(128):
+    #    y, t = rhodes.impulse(i, np.arange(0, 5, 1./16000))
+    #
+    #    plt.figure()
+    #    plt.plot(t, y)
+    #    plt.savefig(f"wavs/{i}.png")
+    #    plt.close()
 
     for i in range(128):
-        y, t = rhodes.impulse(i, np.arange(0, 10, 1./16000), )
+        print(i)
+        y = rhodes.electromotive_force(i, 2.0)
         
         y = y / np.max(np.abs(y))
         y = y * 32767.
         y = np.asarray(y, dtype=np.int16)
-
-        w = wave.Wave_write(f"wavs/{i}.wav")
+    
+        w = wave.Wave_write(f"electromotive/{i}.wav")
         w.setparams((
             1,                        # channel
             2,                        # byte width
