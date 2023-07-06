@@ -103,6 +103,7 @@ class Magnet:
         self._fs = 16000
         self._offset = offset
 
+
 class RhodesPiano:
     """複数のTuning Forkからなる楽器
     """
@@ -130,6 +131,7 @@ class RhodesPiano:
     
     def tine_lengthes(self):
         return [x._lb for i,x in enumerate(self._forks)]
+
 
 import wave, array
 if __name__ == "__main__":
